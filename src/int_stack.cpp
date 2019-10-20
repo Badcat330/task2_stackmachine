@@ -21,7 +21,7 @@ IntStack::IntStack(size_t sz)
 {
     _ssize = sz;
     _stack = new int[sz];
-    _head = -1;
+    _head = 0;
 }
 
 IntStack::~IntStack()
@@ -33,36 +33,34 @@ void IntStack::push(int el)
 {
     if(isFull())
         throw std::logic_error("Stack overflow");
-    _head++;
-    _stack[_head] = el;
+    _stack[_head++] = el;
 }
 
 int IntStack::pop()
 {
     if(isEmpty())
         throw std::logic_error("No elements stored");
-    _head--;
-    return _stack[_head + 1];
+    return _stack[--_head];
 }
 
 int IntStack::top()
 {
-    return _stack[_head];
+    return _stack[_head - 1];
 }
 
 void IntStack::clear()
 {
-    _head = -1;
+    _head = 0;
 }
 
 bool IntStack::isEmpty() const
 {
-    return _head <= -1;
+    return _head == 0;
 }
 
 bool IntStack::isFull() const
 {
-    return _head + 1 >= _ssize;
+    return _head == _ssize;
 }
 
 } // namespace xi

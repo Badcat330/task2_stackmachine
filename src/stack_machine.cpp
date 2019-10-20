@@ -15,6 +15,7 @@
 #include <sstream>
 #include <iostream>
 #include <stdlib.h>
+#include <string>
 
 namespace xi {
 
@@ -22,7 +23,31 @@ namespace xi {
 // Free functions -- helpers
 //==============================================================================
 
-// TODO: if you need any free functions, add their definitions here.
+std::vector<std::string> split(const std::string &expr, char splitSymbol){
+    std::vector<std::string> tokens;
+    std::string buf = "";
+    for (int i = 0; i < expr.length(); ++i)
+    {
+        if(expr[i] == splitSymbol)
+        {
+            tokens.push_back(buf);
+            buf = "";
+        }
+        else
+            buf += expr[i];
+    }
+    tokens.push_back(buf);
+    return tokens;
+}
+
+bool isInt(std::string token){
+    for (char symbol : token)
+    {
+        if(symbol < '0' || symbol > '9')
+            return false;
+    }
+    return true;
+}
 
 //==============================================================================
 // class PlusOp
@@ -116,18 +141,45 @@ void StackMachine::registerOperation(char symb, xi::IOperation *oper)
 
 IOperation* StackMachine::getOperation(char symb)
 {
-    switch(symb){
-        case '+':
-            return new PlusOp();
-        case '/':
-            return new DivOp();
-        case '=':
-            return new AssignOp;
-        case '~':
-            return new InverOp();
-        default:
-            return nullptr;
+    SymbolToOperMapConstIter it = _opers.find(symb);
+    if(it == _opers.end())
+        throw std::logic_error("An operation wasn't found");
+    return it -> second;
+}
+
+int StackMachine::calculate(const std::string &expr, bool clearStack)
+{
+    if(clearStack)
+        _s.clear();
+
+    std::vector<std::string> tokens = split(expr, ' ');
+
+    for(std::string token : tokens){
+        if(isInt(token))
+            _s.push(int(std::stoi(token)));
+        else
+        {
+            IOperation* operation = getOperation(token[0]);
+            IntStack arguments(3);
+            for (int i = 0; i < operation->getArity() + 1; ++i)
+            {
+                arguments.push(_s.pop());
+            }
+            switch (operation->getArity())
+            {
+                case IOperation::Arity::arUno:
+                    _s.push(operation->operation(token[0], arguments.pop()));
+                    break;
+                case IOperation::Arity::arDue:
+                    _s.push(operation->operation(token[0], arguments.pop(), arguments.pop()));
+                    break;
+                case IOperation::Arity::arTre:
+                    _s.push(operation->operation(token[0], arguments.pop(), arguments.pop(), arguments.pop()));
+                    break;
+            }
+        }
     }
+    return _s.top();
 }
 
 } // namespace xi
