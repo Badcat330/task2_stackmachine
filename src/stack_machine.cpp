@@ -12,10 +12,8 @@
 #include "stack_machine.h"
 
 #include <vector>
-#include <sstream>
-#include <iostream>
-#include <stdlib.h>
 #include <string>
+#include <climits>
 
 namespace xi {
 
@@ -23,23 +21,35 @@ namespace xi {
 // Free functions -- helpers
 //==============================================================================
 
+/**
+ *
+ * Method split a string by spaces, don't contain an empty string
+ * @param expr string we should split
+ * @param splitSymbol using what symbol we should split
+ * @return vector<string> which contain each part of string
+ */
 std::vector<std::string> split(const std::string &expr, char splitSymbol){
     std::vector<std::string> tokens;
     std::string buf = "";
     for (int i = 0; i < expr.length(); ++i)
     {
-        if(expr[i] == splitSymbol)
+        if(expr[i] == splitSymbol and buf.length() != 0)
         {
             tokens.push_back(buf);
             buf = "";
         }
-        else
+        else if(expr[i] != splitSymbol)
             buf += expr[i];
     }
     tokens.push_back(buf);
     return tokens;
 }
 
+/**
+ * Method check if we can convert this string or not
+ * @param token we should check
+ * @return bool value, answer
+ */
 bool isInt(std::string token){
     for (char symbol : token)
     {
@@ -160,21 +170,23 @@ int StackMachine::calculate(const std::string &expr, bool clearStack)
         else
         {
             IOperation* operation = getOperation(token[0]);
-            IntStack arguments(3);
-            for (int i = 0; i < operation->getArity() + 1; ++i)
-            {
-                arguments.push(_s.pop());
-            }
+            int a, b, c;
             switch (operation->getArity())
             {
                 case IOperation::Arity::arUno:
-                    _s.push(operation->operation(token[0], arguments.pop()));
+                    a = _s.pop();
+                    _s.push(operation->operation(token[0], a));
                     break;
                 case IOperation::Arity::arDue:
-                    _s.push(operation->operation(token[0], arguments.pop(), arguments.pop()));
+                    b = _s.pop();
+                    a = _s.pop();
+                    _s.push(operation->operation(token[0], a, b));
                     break;
                 case IOperation::Arity::arTre:
-                    _s.push(operation->operation(token[0], arguments.pop(), arguments.pop(), arguments.pop()));
+                    c = _s.pop();
+                    b = _s.pop();
+                    a = _s.pop();
+                    _s.push(operation->operation(token[0], a, b, c));
                     break;
             }
         }
